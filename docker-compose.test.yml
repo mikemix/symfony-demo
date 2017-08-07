@@ -1,0 +1,19 @@
+version: '2'
+
+services:
+  demo:
+    build: .
+    ports:
+      - 8082:80
+
+  selenium:
+    image: elgalu/selenium
+    environment:
+      - VIDEO=true
+      - SCREEN_WIDTH=1280
+      - SCREEN_HEIGHT=720
+    volumes:
+      - "/videos:/build/videos"
+    shm_size: 1g
+    links:
+      - demo
