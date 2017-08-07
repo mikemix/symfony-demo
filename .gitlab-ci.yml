@@ -1,0 +1,25 @@
+stages:
+  - test
+
+variables:
+    GIT_STRATEGY: clone
+
+selenium:
+  only:
+    - master
+  stage: test
+  before_script:
+    - mkdir -p ./build/video /build/logs
+    - docker-compose -p $CI_JOB_ID -f docker-compose.test.yml up -d
+    - docker-compose -p $CI_JOB_ID -f docker-compose.test.yml exec -T demo composer install -o -a -n --prefer-dist
+    - docker-compose -p $CI_JOB_ID -f docker-compose.test.yml exec -T selenium wait_all_done 30s
+  script:
+    - docker-compose -p $CI_JOB_ID -f docker-compose.test.yml exec -T demo vendor/bin/phpunit tests/Selenium
+  after_script:
+    - docker-compose -p $CI_JOB_ID -f docker-compose.test.yml exec -T selenium stop-video || true
+    - docker-compose -p $CI_JOB_ID -f docker-compose.test.yml exec -T selenium /copy_videos.sh || true
+    - cp ./var/logs/apache2/*.log ./build/logs/apache || true
+    - cp ./var/www/html/var/logs/*.log ./build/logs/app || true
+    - docker-compose -p $CI_JOB_ID -f docker-compose.test.yml exec -T selenium stop || true
+    - docker-compose -p $CI_JOB_ID -f docker-compose.test.yml exec -T demo rm -rf ./var/logs/* ./var/cache/* ./vendor/* ./web/bundles || true
+    - docker-compose -p $CI_JOB_ID -f docker-compose.test.yml down -v --remove-orphans || true
