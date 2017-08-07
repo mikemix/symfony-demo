@@ -3,8 +3,6 @@ version: '2'
 services:
   demo:
     build: .
-    ports:
-      - 8082:80
 
   selenium:
     image: elgalu/selenium
